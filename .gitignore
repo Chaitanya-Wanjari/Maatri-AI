@@ -1,0 +1,54 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment
+.env
+
+# Logs
+logs/
+*.log
+
+# Vector databases
+*.faiss
+*.index
+
+# Embeddings
+*.npy
+*.pt
+*.bin
+
+# Model checkpoints
+checkpoints/
+
+# Node
+frontend/node_modules/
+
+# Build
+frontend/dist/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models
+backend/**/models/
+
+# Embeddings
+backend/**/embeddings/
+
+# Vector Stores
+*.faiss
+*.npy
+
+# Hugging Face cache
+.huggingface/
+
+# VS Code
+.vscode/

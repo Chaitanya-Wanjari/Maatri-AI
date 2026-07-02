@@ -1,0 +1,19 @@
+# API
+fastapi
+uvicorn
+python-dotenv
+pydantic
+
+# Core ML
+numpy
+faiss-cpu
+
+# HuggingFace
+transformers
+sentence-transformers
+accelerate
+
+# Utilities
+torch
+
+google-genai
