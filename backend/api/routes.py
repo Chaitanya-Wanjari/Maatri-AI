@@ -1,18 +1,18 @@
 from fastapi import APIRouter
 
+from backend.agents.planner_agent import PlannerAgent
 from backend.english_rag.schemas import (
     ChatRequest,
     ChatResponse,
 )
 
-from backend.english_rag.rag_service import answer
-
 router = APIRouter()
+
+planner = PlannerAgent()
 
 
 @router.get("/")
 def health():
-
     return {
         "status": "running",
         "service": "Maatri AI"
@@ -25,8 +25,6 @@ def health():
 )
 def ask(request: ChatRequest):
 
-    response = answer(
-        request.question
-    )
+    response = planner.run(request.question)
 
     return response

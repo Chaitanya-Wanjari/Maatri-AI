@@ -1,66 +1,61 @@
-from backend.llm.gemini_client import generate as gemini_generate
+"""
+Generation Service
+
+Uses Gemini to generate grounded answers from retrieved evidence.
+Falls back to evidence-only mode if Gemini is unavailable.
+"""
+
+from backend.llm.provider import generate
+from backend.utils.fallback import evidence_summary
 
 from .config import MEDICAL_DISCLAIMER
 
 
-def build_prompt(
-    query: str,
-    retrieved_docs,
-):
-    """
-    Build a grounded prompt using only retrieved evidence.
-    """
+def generate_answer(query: str, retrieved_docs: list):
 
-    evidence = []
+    context = "\n\n".join(
+        doc["text"]
+        for doc in retrieved_docs
+    )
 
-    for i, doc in enumerate(retrieved_docs, start=1):
+    prompt = f"""
+You are Maatri AI.
 
-        evidence.append(
-            f"""
-Document {i}
-Source: {doc["source"]}
+You are an empathetic maternal healthcare assistant.
 
-Content:
-{doc["text"]}
-"""
-        )
+Answer ONLY using the evidence below.
 
-    context = "\n".join(evidence)
+If the evidence is insufficient,
+say that you don't know.
 
-    return f"""
-You are Maatri AI, an evidence-based maternal healthcare assistant.
+Keep the answer concise and medically safe.
 
-IMPORTANT RULES:
+========================
 
-1. Answer ONLY using the retrieved evidence.
-2. Never invent medical facts.
-3. If the evidence is insufficient, clearly state that.
-4. Never claim certainty unless supported.
-5. Keep the response empathetic and concise.
-
-Retrieved Evidence:
+Evidence:
 
 {context}
 
-User Question:
+========================
+
+Question:
 
 {query}
-
-Answer:
 """
 
+    answer = generate(prompt)
 
-def generate_answer(
-    query: str,
-    retrieved_docs,
-):
+    # ----------------------------------------------------
+    # Gemini unavailable
+    # ----------------------------------------------------
 
-    prompt = build_prompt(
-        query,
-        retrieved_docs,
-    )
+    if answer is None:
 
-    answer = gemini_generate(prompt)
+        answer = (
+            "⚠️ The language model is temporarily unavailable.\n\n"
+            "The following evidence was retrieved from the medical knowledge base:\n\n"
+            + evidence_summary(retrieved_docs)
+        )
 
     return {
         "answer": answer,

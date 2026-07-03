@@ -59,10 +59,16 @@ def retrieve(query: str):
     candidates = candidates[:RERANK_CANDIDATES]
 
     # Cross-encoder reranking
+    unique = {}
+    for doc in candidates:
+       unique.setdefault(doc["text"], doc)
+
+    candidates = list(unique.values())
+
     pairs = [
         (query, doc["text"])
         for doc in candidates
-    ]
+]
 
     rerank_scores = reranker.predict(pairs)
 
