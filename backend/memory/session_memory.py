@@ -1,3 +1,7 @@
+from collections import defaultdict
+
+memory = defaultdict(list)
+
 class SessionMemory:
     def __init__(self):
         self.data = {}
