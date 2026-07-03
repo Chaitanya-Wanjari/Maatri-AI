@@ -4,16 +4,13 @@ BASE_DIR = Path(__file__).resolve().parent
 
 MODELS_DIR = BASE_DIR / "models"
 
-EMBEDDINGS_DIR = BASE_DIR / "embeddings"
+EMBEDDING_MODEL = "backend/models/hi_biencoder"
 
 BI_ENCODER_PATH = MODELS_DIR / "bi-encoder"
 
-CROSS_ENCODER_PATH = MODELS_DIR / "crossencoder_finetuned"
-
-FAISS_INDEX = EMBEDDINGS_DIR / "index.faiss"
-
-METADATA_FILE = EMBEDDINGS_DIR / "meta.json"
-
+CROSS_ENCODER = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+FAISS_INDEX = "backend/hindi_rag/embeddings/index.faiss"
+METADATA = "backend/hindi_rag/embeddings/meta.json"
 TOP_K = 5
 
 RERANK_CANDIDATES = 15
