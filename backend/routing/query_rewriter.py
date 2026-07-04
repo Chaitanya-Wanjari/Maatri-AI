@@ -1,50 +1,34 @@
-from backend.llm.provider import generate
+FOLLOWUPS = {
+    "every day",
+    "everyday",
+    "daily",
+    "what about daily",
+    "why",
+    "how much",
+    "is it safe",
+    "is this normal",
+    "can i",
+    "what about",
+    "रोज़",
+    "रोज",
+    "हर दिन",
+    "क्यों",
+    "कितना",
+    "क्या यह सामान्य है",
+}
 
 
-def rewrite_query(
-    query: str,
-    history: list,
-):
-    """
-    Rewrite short follow-up questions into standalone questions.
-    """
+def rewrite_query(query, history):
 
-    if not history:
+    q = query.strip().lower()
+
+    if q not in FOLLOWUPS:
         return query
 
-    history_text = ""
+    for msg in reversed(history):
 
-    for msg in history[-6:]:
-        history_text += (
-            f"{msg['role']}: {msg['content']}\n"
-        )
+        if msg["role"] == "user":
 
-    prompt = f"""
-You are a query rewriting assistant.
+            return msg["content"] + " " + query
 
-Rewrite the user's latest question into a complete standalone question.
-
-Rules:
-
-- Preserve the original meaning.
-- Use the conversation history.
-- Do NOT answer the question.
-- Output ONLY the rewritten question.
-- If the question is already complete,
-return it unchanged.
-
-Conversation:
-
-{history_text}
-
-Latest Question:
-
-{query}
-"""
-
-    rewritten = generate(prompt)
-
-    if rewritten is None:
-        return query
-
-    return rewritten.strip()
+    return query

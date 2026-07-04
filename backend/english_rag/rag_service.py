@@ -9,12 +9,16 @@ from backend.memory.store import (
     add_message,
 )
 
-from .generation_service import generate_answer
+from backend.routing.query_rewriter import rewrite_query
+
 from .retrieval_service import retrieve
+from .generation_service import generate_answer
 
 
-def answer(query: str, session_id: str):
-
+def answer(
+    query: str,
+    session_id: str,
+):
     # -----------------------------
     # Load conversation history
     # -----------------------------
@@ -22,31 +26,18 @@ def answer(query: str, session_id: str):
     history = get_history(session_id)
 
     # -----------------------------
-    # Build retrieval query
+    # Rewrite follow-up question
     # -----------------------------
 
-    search_query = query
+    rewritten_query = rewrite_query(
+        query=query,
+        history=history,
+    )
 
-    if history:
-
-        last_user = ""
-
-        # Find the most recent user message
-        for msg in reversed(history):
-
-            if msg["role"] == "user":
-
-                last_user = msg["content"]
-
-                break
-
-        if last_user:
-
-            search_query = (
-                last_user
-                + "\n"
-                + query
-            )
+    print("\n========== QUERY REWRITE ==========")
+    print("Original :", query)
+    print("Rewritten:", rewritten_query)
+    print("===================================\n")
 
     # -----------------------------
     # Start timer
@@ -58,14 +49,14 @@ def answer(query: str, session_id: str):
     # Retrieve documents
     # -----------------------------
 
-    documents = retrieve(search_query)
+    documents = retrieve(rewritten_query)
 
     # -----------------------------
     # Generate grounded answer
     # -----------------------------
 
     response = generate_answer(
-        query=query,
+        query=rewritten_query,
         retrieved_docs=documents,
         history=history,
     )
