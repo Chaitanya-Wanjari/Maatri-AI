@@ -25,6 +25,9 @@ def health():
 )
 def ask(request: ChatRequest):
 
-    response = planner.run(request.question)
+    response = planner.run(
+    request.question,
+    request.session_id,
+    )
 
     return response

@@ -17,7 +17,7 @@ class PlannerAgent:
 
         self.hindi = HindiPlanner()
 
-    def run(self, query):
+    def run(self, query, session_id,):
 
         language = detect_language(query)
 
@@ -28,7 +28,7 @@ class PlannerAgent:
 
             print("Routing → Hindi RAG")
 
-            return self.hindi.run(query)
+            return self.hindi.run(query, session_id,)
 
         # English queries
         route = classify(query)
@@ -36,9 +36,9 @@ class PlannerAgent:
         print(f"Planner Route: {route}")
 
         if route == "nutrition":
-            return self.nutrition.run(query)
+            return self.nutrition.run(query, session_id,)
 
         if route == "emergency":
-            return self.emergency.run(query)
+            return self.emergency.run(query, session_id,)
 
-        return self.health.run(query)
+        return self.health.run(query, session_id,)

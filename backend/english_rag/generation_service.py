@@ -11,17 +11,30 @@ from backend.utils.fallback import evidence_summary
 from .config import MEDICAL_DISCLAIMER
 
 
-def generate_answer(query: str, retrieved_docs: list):
+def generate_answer(
+    query: str,
+    retrieved_docs: list,
+    history: list,
+):
 
     context = "\n\n".join(
         doc["text"]
         for doc in retrieved_docs
     )
 
+    history_text = ""
+
+    for msg in history:
+        history_text += (
+            f"{msg['role']}: {msg['content']}\n"
+        )
+
     prompt = f"""
 You are Maatri AI.
 
 You are an empathetic maternal healthcare assistant.
+
+Use the conversation history when answering follow-up questions.
 
 Answer ONLY using the evidence below.
 
@@ -29,6 +42,12 @@ If the evidence is insufficient,
 say that you don't know.
 
 Keep the answer concise and medically safe.
+
+========================
+
+Conversation History:
+
+{history_text}
 
 ========================
 
@@ -45,9 +64,9 @@ Question:
 
     answer = generate(prompt)
 
-    # ----------------------------------------------------
+    # ----------------------------------------
     # Gemini unavailable
-    # ----------------------------------------------------
+    # ----------------------------------------
 
     if answer is None:
 

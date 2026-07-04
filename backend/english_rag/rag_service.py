@@ -4,11 +4,49 @@ Main English Knowledge Engine
 
 import time
 
+from backend.memory.store import (
+    get_history,
+    add_message,
+)
+
 from .generation_service import generate_answer
 from .retrieval_service import retrieve
 
 
-def answer(query: str):
+def answer(query: str, session_id: str):
+
+    # -----------------------------
+    # Load conversation history
+    # -----------------------------
+
+    history = get_history(session_id)
+
+    # -----------------------------
+    # Build retrieval query
+    # -----------------------------
+
+    search_query = query
+
+    if history:
+
+        last_user = ""
+
+        # Find the most recent user message
+        for msg in reversed(history):
+
+            if msg["role"] == "user":
+
+                last_user = msg["content"]
+
+                break
+
+        if last_user:
+
+            search_query = (
+                last_user
+                + "\n"
+                + query
+            )
 
     # -----------------------------
     # Start timer
@@ -20,15 +58,16 @@ def answer(query: str):
     # Retrieve documents
     # -----------------------------
 
-    documents = retrieve(query)
+    documents = retrieve(search_query)
 
     # -----------------------------
-    # Generate response
+    # Generate grounded answer
     # -----------------------------
 
     response = generate_answer(
         query=query,
         retrieved_docs=documents,
+        history=history,
     )
 
     # -----------------------------
@@ -67,5 +106,21 @@ def answer(query: str):
         "source_distribution": source_counts,
         "latency_ms": latency_ms,
     }
+
+    # -----------------------------
+    # Save conversation
+    # -----------------------------
+
+    add_message(
+        session_id,
+        "user",
+        query,
+    )
+
+    add_message(
+        session_id,
+        "assistant",
+        response["answer"],
+    )
 
     return response

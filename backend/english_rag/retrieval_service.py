@@ -81,4 +81,6 @@ def retrieve(query: str):
         reverse=True,
     )
 
+
+
     return candidates[:TOP_K]
