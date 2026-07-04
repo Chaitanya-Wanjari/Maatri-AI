@@ -1,5 +1,3 @@
-import numpy as np
-
 from .config import (
     TOP_K,
     RERANK_CANDIDATES,
@@ -38,25 +36,41 @@ def retrieve(query: str):
         if idx < 0:
             continue
 
-        candidates.append(
-            {
-                "text": docs[idx],
-                "source": "Hindi KB",
-                "dense_score": float(score),
-            }
-        )
+        record = docs[idx]
 
-    pairs = [
-        (query, doc["text"])
-        for doc in candidates
-    ]
+        if isinstance(record, dict):
+
+            text = record.get("text", "")
+            source = record.get("source", "Hindi KB")
+
+        else:
+
+            text = record
+            source = "Hindi KB"
+
+        candidates.append(
+           {
+              "text": text,
+              "source": source,
+              "dense_score": float(score),
+           }
+)
+    
+    
+    pairs = []
+
+    for doc in candidates:
+
+       text = doc["text"]
+
+       if isinstance(text, dict):
+          text = text.get("text", "")
+
+       pairs.append((query, text))
 
     rerank_scores = reranker.predict(pairs)
 
-    for doc, score in zip(
-        candidates,
-        rerank_scores,
-    ):
+    for doc, score in zip(candidates, rerank_scores):
         doc["rerank_score"] = float(score)
 
     candidates.sort(
@@ -64,4 +78,14 @@ def retrieve(query: str):
         reverse=True,
     )
 
-    return candidates[:TOP_K]
+    unique = []
+    seen = set()
+
+    for doc in candidates:
+       if doc["text"] in seen:
+          continue
+
+       seen.add(doc["text"])
+       unique.append(doc)
+
+    return unique[:TOP_K]

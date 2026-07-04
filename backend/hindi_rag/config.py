@@ -2,17 +2,17 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-MODELS_DIR = BASE_DIR / "models"
+MODELS_DIR = BASE_DIR.parent / "models"
 
-EMBEDDING_MODEL = "backend/models/hi_biencoder"
+BI_ENCODER_PATH = MODELS_DIR / "hi_biencoder"
 
-BI_ENCODER_PATH = MODELS_DIR / "bi-encoder"
+CROSS_ENCODER_PATH = MODELS_DIR / "hi_crossencoder"
 
-CROSS_ENCODER = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
-FAISS_INDEX = "backend/hindi_rag/embeddings/index.faiss"
-METADATA = "backend/hindi_rag/embeddings/meta.json"
+FAISS_INDEX = BASE_DIR / "embeddings" / "index.faiss"
+
+METADATA_FILE = BASE_DIR / "embeddings" / "meta.json"
+
 TOP_K = 5
-
 RERANK_CANDIDATES = 15
 
 MEDICAL_DISCLAIMER = (
