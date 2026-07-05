@@ -116,5 +116,16 @@ def answer(
         "assistant",
         response["answer"],
     )
+    
 
+    response["trace"] = {
+        "original_query": query,
+        "rewritten_query": rewritten_query,
+        "retrieved_documents": len(documents),
+        "retriever": "FAISS",
+        "reranker": "Cross Encoder",
+        "generator": "Gemini 2.5 Flash",
+        "language": response["metadata"]["language"],
+        "agent": response["agent"],
+    }
     return response
