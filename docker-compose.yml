@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+
+  maatri-backend:
+
+    build: .
+
+    container_name: maatri-backend
+
+    ports:
+      - "8000:8000"
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./backend:/app/backend
+
+    restart: unless-stopped

@@ -1,0 +1,13 @@
+.venv
+.git
+frontend
+node_modules
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.vscode
+checkpoints
+datasets
+logs

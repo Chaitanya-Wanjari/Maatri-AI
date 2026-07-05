@@ -30,4 +30,13 @@ def ask(request: ChatRequest):
     request.session_id,
     )
 
+    response["trace"] = [
+        "Planner Agent",
+        response["agent"],
+        response["metadata"]["knowledge_engine"],
+        response["metadata"]["retriever"],
+        response["metadata"]["reranker"],
+        response["metadata"]["llm"],
+    ]
+
     return response

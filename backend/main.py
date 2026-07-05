@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.routes import router
-
+from backend.api.health import router as health_router
 
 app = FastAPI(
     title="Maatri AI",
@@ -16,5 +16,5 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.include_router(health_router)
 app.include_router(router)

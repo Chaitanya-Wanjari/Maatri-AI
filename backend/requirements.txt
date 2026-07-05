@@ -1,19 +1,46 @@
+# ============================
 # API
+# ============================
+
 fastapi
 uvicorn
 python-dotenv
 pydantic
 
-# Core ML
+# ============================
+# ML
+# ============================
+
 numpy
+torch
 faiss-cpu
 
-# HuggingFace
 transformers
 sentence-transformers
 accelerate
 
-# Utilities
-torch
+# ============================
+# Google
+# ============================
 
 google-genai
+google-adk
+
+# ============================
+# MCP
+# ============================
+
+mcp
+
+# ============================
+# Language Detection
+# ============================
+
+langdetect
+
+# ============================
+# Utilities
+# ============================
+
+tqdm
+requests
