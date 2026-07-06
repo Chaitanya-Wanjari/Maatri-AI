@@ -400,7 +400,7 @@ LLM_PROVIDER=gemini
 
 ## Explainability Panel
 
-![Hindi](docs/explanability.png)
+![Hindi](docs/explainability.png)
 
 ---
 
