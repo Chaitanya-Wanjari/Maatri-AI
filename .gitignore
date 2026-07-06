@@ -24,17 +24,11 @@ logs/
 # Vector Stores
 #################################################
 
-*.faiss
-*.index
-*.npy
-
 #################################################
 # Model Checkpoints
 #################################################
 
 checkpoints/
-backend/**/models/
-backend/**/embeddings/
 
 #################################################
 # HuggingFace Cache
@@ -84,3 +78,12 @@ transformers_cache/
 *.ckpt
 *.bin
 *.safetensors
+
+# Large downloaded models
+backend/models/
+
+# Keep project artifacts
+!backend/english_rag/models/english/
+!backend/english_rag/models/fine_tuned_cross_encoder/
+!backend/hindi_rag/embeddings/
+!backend/english_rag/models/fine_tuned_cross_encoder/model.safetensors
