@@ -2,11 +2,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-MODELS_DIR = BASE_DIR.parent / "models"
+BI_ENCODER_PATH = "intfloat/multilingual-e5-base"
 
-BI_ENCODER_PATH = MODELS_DIR / "hi_biencoder"
-
-CROSS_ENCODER_PATH = MODELS_DIR / "hi_crossencoder"
+CROSS_ENCODER_PATH = (
+    "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+)
 
 FAISS_INDEX = BASE_DIR / "embeddings" / "index.faiss"
 
