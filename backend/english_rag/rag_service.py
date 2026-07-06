@@ -19,15 +19,15 @@ def answer(
     query: str,
     session_id: str,
 ):
-    # -----------------------------
+    # ----------------------------------
     # Load conversation history
-    # -----------------------------
+    # ----------------------------------
 
     history = get_history(session_id)
 
-    # -----------------------------
-    # Rewrite follow-up question
-    # -----------------------------
+    # ----------------------------------
+    # Rewrite follow-up query
+    # ----------------------------------
 
     rewritten_query = rewrite_query(
         query=query,
@@ -39,21 +39,13 @@ def answer(
     print("Rewritten:", rewritten_query)
     print("===================================\n")
 
-    # -----------------------------
-    # Start timer
-    # -----------------------------
+    # ----------------------------------
+    # Retrieval
+    # ----------------------------------
 
     start = time.perf_counter()
 
-    # -----------------------------
-    # Retrieve documents
-    # -----------------------------
-
     documents = retrieve(rewritten_query)
-
-    # -----------------------------
-    # Generate grounded answer
-    # -----------------------------
 
     response = generate_answer(
         query=rewritten_query,
@@ -61,32 +53,23 @@ def answer(
         history=history,
     )
 
-    # -----------------------------
-    # Calculate latency
-    # -----------------------------
-
     latency_ms = round(
         (time.perf_counter() - start) * 1000,
         2,
     )
 
-    # -----------------------------
+    # ----------------------------------
     # Source statistics
-    # -----------------------------
+    # ----------------------------------
 
     source_counts = {}
 
     for doc in documents:
-
         source = doc["source"]
 
         source_counts[source] = (
             source_counts.get(source, 0) + 1
         )
-
-    # -----------------------------
-    # Build response
-    # -----------------------------
 
     response["sources"] = documents
 
@@ -101,9 +84,34 @@ def answer(
         "reranker": "Cross Encoder",
     }
 
-    # -----------------------------
-    # Save conversation
-    # -----------------------------
+    # ----------------------------------
+    # Conversation Memory
+    # ----------------------------------
+
+    memory = []
+
+    for msg in history[-4:]:
+
+        memory.append(
+            {
+                "role": msg["role"],
+                "content": msg["content"],
+            }
+        )
+
+    response["trace"] = {
+        "original_query": query,
+        "rewritten_query": rewritten_query,
+        "retrieved_documents": len(documents),
+        "conversation_memory": memory,
+        "retriever": "FAISS",
+        "reranker": "Cross Encoder",
+        "generator": response["generator"],
+    }
+
+    # ----------------------------------
+    # Save Conversation
+    # ----------------------------------
 
     add_message(
         session_id,
@@ -116,16 +124,5 @@ def answer(
         "assistant",
         response["answer"],
     )
-
-    response["trace"] = {
-        "original_query": query,
-        "rewritten_query": rewritten_query,
-        "retrieved_documents": len(documents),
-        "retriever": "FAISS",
-        "reranker": "Cross Encoder",
-        "generator": "Gemini 2.5 Flash",
-        "language": response["metadata"]["language"],
-        "agent": response["agent"],
-    }
 
     return response

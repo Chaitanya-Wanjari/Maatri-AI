@@ -26,10 +26,14 @@ def generate(prompt: str):
 
         response.raise_for_status()
 
-        return response.json()["response"]
+        return {
+            "text": response.json()["response"],
+            "provider": f"Ollama ({OLLAMA_MODEL})",
+        }
 
     except Exception as e:
 
-        print(f"Ollama Error: {e}")
+        print("\nOllama Error")
+        print(e)
 
         return None

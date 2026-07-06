@@ -15,7 +15,7 @@ planner = PlannerAgent()
 def health():
     return {
         "status": "running",
-        "service": "Maatri AI"
+        "service": "Maatri AI",
     }
 
 
@@ -26,17 +26,11 @@ def health():
 def ask(request: ChatRequest):
 
     response = planner.run(
-    request.question,
-    request.session_id,
+        request.question,
+        request.session_id,
     )
 
-    response["trace"] = [
-        "Planner Agent",
-        response["agent"],
-        response["metadata"]["knowledge_engine"],
-        response["metadata"]["retriever"],
-        response["metadata"]["reranker"],
-        response["metadata"]["llm"],
-    ]
+    # Do NOT overwrite trace here.
+    # It is already created by the RAG service.
 
     return response

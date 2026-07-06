@@ -1,11 +1,13 @@
 """
 Hindi Generation Service
 
-Uses Gemini to generate grounded answers from retrieved evidence.
-Falls back to evidence-only mode if Gemini is unavailable.
+Uses Gemini as the primary generator.
+Falls back to a local BART summarizer.
+Falls back to an evidence synthesizer if both fail.
 """
 
 from backend.llm.provider import generate
+from backend.llm.bart_summarizer import summarize
 from backend.utils.fallback import evidence_summary
 
 from .config import MEDICAL_DISCLAIMER
@@ -17,10 +19,18 @@ def generate_answer(
     history: list,
     agent_type: str = "health",
 ):
+    # ----------------------------------------------------
+    # Build retrieved context
+    # ----------------------------------------------------
+
     context = "\n\n".join(
         doc["text"]
-        for doc in retrieved_docs
+        for doc in retrieved_docs[:2]
     )
+
+    # ----------------------------------------------------
+    # Conversation history
+    # ----------------------------------------------------
 
     history_text = ""
 
@@ -49,13 +59,11 @@ def generate_answer(
 
 नियम:
 
-- केवल दिए गए साक्ष्यों का उपयोग करें।
+- केवल दिए गए चिकित्सा साक्ष्यों का उपयोग करें।
 - यदि साक्ष्य से लगे कि स्थिति गंभीर हो सकती है,
   तो तुरंत चिकित्सीय सहायता लेने की सलाह दें।
-- शब्दशः समान प्रश्न की आवश्यकता नहीं है।
-- केवल तभी कहें कि जानकारी उपलब्ध नहीं है
-  जब कोई भी साक्ष्य उपयोगी न हो।
 - कोई चिकित्सा जानकारी स्वयं न बनाएं।
+- शांत, स्पष्ट और सहानुभूतिपूर्ण उत्तर दें।
 """
 
     elif agent_type == "nutrition":
@@ -67,11 +75,9 @@ def generate_answer(
 
 नियम:
 
-- केवल दिए गए साक्ष्यों का उपयोग करें।
-- यदि भोजन सामान्यतः सुरक्षित है,
-  तो स्वाभाविक रूप से उत्तर दें।
-- केवल तभी कहें कि जानकारी उपलब्ध नहीं है
-  जब कोई उपयुक्त साक्ष्य न हो।
+- केवल दिए गए चिकित्सा साक्ष्यों का उपयोग करें।
+- व्यावहारिक और सरल सलाह दें।
+- कोई अतिरिक्त जानकारी स्वयं न बनाएं।
 """
 
     else:
@@ -84,13 +90,16 @@ def generate_answer(
 नियम:
 
 - बातचीत के इतिहास का उपयोग करें।
-- केवल दिए गए साक्ष्यों के आधार पर उत्तर दें।
-- यदि साक्ष्य प्रश्न से पर्याप्त रूप से संबंधित हों,
+- केवल दिए गए चिकित्सा साक्ष्यों के आधार पर उत्तर दें।
+- यदि साक्ष्य पर्याप्त रूप से संबंधित हों,
   तो उनका उपयोग करें।
-- केवल तभी कहें कि जानकारी उपलब्ध नहीं है
-  जब कोई भी साक्ष्य उपयोगी न हो।
 - कोई चिकित्सा जानकारी स्वयं न बनाएं।
+- उत्तर सरल, सुरक्षित और स्पष्ट रखें।
 """
+
+    # ----------------------------------------------------
+    # Prompt
+    # ----------------------------------------------------
 
     prompt = f"""
 {system_prompt}
@@ -103,7 +112,7 @@ def generate_answer(
 
 ========================
 
-साक्ष्य:
+चिकित्सा साक्ष्य:
 
 {context}
 
@@ -112,19 +121,86 @@ def generate_answer(
 प्रश्न:
 
 {query}
+
+========================
+
+उत्तर:
 """
 
-    answer = generate(prompt)
+    # ----------------------------------------------------
+    # Primary Generator (Gemini)
+    # ----------------------------------------------------
+
+    result = generate(prompt)
+
+    generator = "Gemini 2.5 Flash"
+
+    if result is not None:
+
+        generator = result.get(
+            "provider",
+            "Gemini 2.5 Flash",
+        )
+
+        answer = result["text"]
+
+    else:
+
+        answer = None
+
+    # ----------------------------------------------------
+    # Local BART fallback
+    # ----------------------------------------------------
 
     if answer is None:
 
+        try:
+
+            local_answer = summarize(
+                question=query,
+                evidence=context,
+            )
+
+            if local_answer:
+
+                generator = "Local BART Summarizer"
+
+                answer = (
+                    "⚠️ क्लाउड AI इस समय उपलब्ध नहीं है।\n\n"
+                    "नीचे दिया गया उत्तर प्राप्त चिकित्सा साक्ष्यों "
+                    "का स्थानीय सारांश है।\n\n"
+                    + local_answer
+                )
+
+                print("\nUsing Local BART fallback.\n")
+
+        except Exception as e:
+
+            print("\nBART Error")
+            print(e)
+
+            answer = None
+
+    # ----------------------------------------------------
+    # Final Evidence Fallback
+    # ----------------------------------------------------
+
+    if answer is None:
+
+        generator = "Evidence Synthesizer"
+
         answer = (
-            "⚠️ भाषा मॉडल इस समय उपलब्ध नहीं है।\\n\\n"
-            "ज्ञान आधार से प्राप्त जानकारी:\\n\\n"
+            "⚠️ क्लाउड AI इस समय उपलब्ध नहीं है।\n\n"
+            "प्राप्त चिकित्सा साक्ष्यों के आधार पर:\n\n"
             + evidence_summary(retrieved_docs)
         )
+
+    # ----------------------------------------------------
+    # Return
+    # ----------------------------------------------------
 
     return {
         "answer": answer,
         "disclaimer": MEDICAL_DISCLAIMER,
+        "generator": generator,
     }

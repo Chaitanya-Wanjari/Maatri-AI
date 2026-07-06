@@ -4,7 +4,6 @@ from functools import lru_cache
 
 from dotenv import load_dotenv
 from google import genai
-from google.genai.errors import ClientError
 
 load_dotenv()
 
@@ -16,7 +15,7 @@ def get_client():
 
     if not api_key:
         raise ValueError(
-            "GEMINI_API_KEY not found in environment variables."
+            "GEMINI_API_KEY not found."
         )
 
     return genai.Client(api_key=api_key)
@@ -27,7 +26,7 @@ def generate(prompt: str):
 
     client = get_client()
 
-    retries = 3
+    retries = 1
 
     for attempt in range(retries):
 
@@ -38,23 +37,29 @@ def generate(prompt: str):
                 contents=prompt,
             )
 
-            return response.text
+            if (
+                response is None
+                or response.text is None
+                or not response.text.strip()
+            ):
+                return None
 
-        except ClientError as e:
+            return {
+                "text": response.text.strip(),
+                "provider": "Gemini 2.5 Flash",
+            }
 
-            print(f"\nGemini Error ({attempt+1}/{retries})")
+        except Exception as e:
+
+            print("\nGemini Error")
+            print(type(e).__name__)
             print(e)
 
             if attempt < retries - 1:
 
-                wait = 2 ** attempt
-
-                print(f"Retrying in {wait} seconds...\n")
-
-                time.sleep(wait)
+                time.sleep(1)
 
             else:
 
-                print("\nSwitching to fallback mode.\n")
-
                 return None
+            

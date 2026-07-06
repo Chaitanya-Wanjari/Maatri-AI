@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from backend.llm.gemini_client import generate
+from backend.llm.provider import generate
+
 
 PROMPT_PATH = (
     Path(__file__).parent.parent
@@ -23,8 +24,9 @@ def classify(question: str):
     result = generate(prompt)
 
     # -----------------------------
-    # Gemini unavailable
+    # LLM unavailable
     # -----------------------------
+
     if result is None:
 
         q = question.lower()
@@ -55,7 +57,20 @@ def classify(question: str):
 
         return "health"
 
-    label = result.strip().lower()
+    # -----------------------------
+    # Provider now returns dict
+    # -----------------------------
+
+    if isinstance(result, dict):
+
+        label = result.get(
+            "text",
+            ""
+        ).strip().lower()
+
+    else:
+
+        label = str(result).strip().lower()
 
     allowed = {
         "health",

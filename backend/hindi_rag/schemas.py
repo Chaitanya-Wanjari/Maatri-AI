@@ -1,5 +1,6 @@
+from typing import Any, Dict, List
+
 from pydantic import BaseModel
-from typing import List
 
 
 class ChatRequest(BaseModel):
@@ -17,5 +18,16 @@ class RetrievedDocument(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     disclaimer: str
+
     sources: List[RetrievedDocument]
+
+    # Explainability
+    metadata: Dict[str, Any]
+
+    trace: Dict[str, Any]
+
+    agent: str
+
+    class Config:
+        extra = "allow"
     

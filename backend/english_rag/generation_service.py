@@ -1,11 +1,13 @@
 """
 Generation Service
 
-Uses Gemini to generate grounded answers from retrieved evidence.
-Falls back to evidence-only mode if Gemini is unavailable.
+Uses Gemini/Ollama as the primary generator.
+Falls back to a local BART summarizer.
+Falls back to an evidence synthesizer if both fail.
 """
 
 from backend.llm.provider import generate
+from backend.llm.bart_summarizer import summarize
 from backend.utils.fallback import evidence_summary
 
 from .config import MEDICAL_DISCLAIMER
@@ -17,10 +19,18 @@ def generate_answer(
     history: list,
     agent_type: str = "health",
 ):
+    # ----------------------------------------------------
+    # Retrieved Context
+    # ----------------------------------------------------
+
     context = "\n\n".join(
         doc["text"]
-        for doc in retrieved_docs
+        for doc in retrieved_docs[:2]
     )
+
+    # ----------------------------------------------------
+    # Conversation History
+    # ----------------------------------------------------
 
     history_text = ""
 
@@ -30,7 +40,7 @@ def generate_answer(
         )
 
     # ----------------------------------------------------
-    # Agent-specific system prompt
+    # Agent Prompt
     # ----------------------------------------------------
 
     if agent_type == "emergency":
@@ -43,12 +53,11 @@ You are an emergency maternal healthcare assistant.
 Rules:
 
 - Stay calm and reassuring.
-- Use ONLY the evidence.
-- If the evidence reasonably supports urgent medical attention,
-  clearly advise the user to seek immediate medical care.
-- Do NOT require exact wording.
-- Only answer "I don't know" if none of the evidence is useful.
-- Never invent medical information.
+- Use ONLY the retrieved medical evidence.
+- If the evidence indicates an emergency,
+  advise the user to seek immediate medical attention.
+- Never exaggerate risk.
+- Never invent medical facts.
 """
 
     elif agent_type == "nutrition":
@@ -60,11 +69,9 @@ You are a maternal nutrition expert.
 
 Rules:
 
-- Use ONLY the evidence.
-- Be practical and encouraging.
-- If foods are generally safe according to the evidence,
-  say so naturally.
-- Do not answer "I don't know" unless no relevant evidence exists.
+- Use ONLY the retrieved medical evidence.
+- Give practical and encouraging advice.
+- Never invent information.
 """
 
     else:
@@ -76,52 +83,123 @@ You are an empathetic maternal healthcare assistant.
 
 Rules:
 
-- Use the conversation history for follow-up questions.
-- Answer ONLY using the evidence.
-- If the evidence is reasonably relevant,
-  use it even if the wording is not identical.
-- Only say "I don't know" if NONE of the evidence helps.
+- Use conversation history for follow-up questions.
+- Answer ONLY using the retrieved medical evidence.
+- Use relevant evidence even if wording differs.
 - Never invent medical advice.
-- Keep answers concise and medically safe.
+- If evidence is insufficient, clearly state that.
 """
+
+    # ----------------------------------------------------
+    # Final Prompt
+    # ----------------------------------------------------
 
     prompt = f"""
 {system_prompt}
 
-========================
+==============================
 
 Conversation History:
 
 {history_text}
 
-========================
+==============================
 
-Evidence:
+Medical Evidence:
 
 {context}
 
-========================
+==============================
 
-Question:
+User Question:
 
 {query}
+
+==============================
+
+Answer:
 """
 
-    answer = generate(prompt)
+    # ----------------------------------------------------
+    # Primary Generator
+    # ----------------------------------------------------
+
+    result = generate(prompt)
+
+    generator = "Unknown"
+
+    answer = None
+
+    if result is not None:
+
+        if isinstance(result, dict):
+
+            generator = result.get(
+                "provider",
+                "Unknown",
+            )
+
+            answer = result.get("text")
+
+        elif isinstance(result, str):
+
+            generator = "Unknown"
+
+            answer = result
 
     # ----------------------------------------------------
-    # Gemini unavailable
+    # Local BART Fallback
     # ----------------------------------------------------
 
     if answer is None:
 
+        try:
+
+            local_answer = summarize(
+                question=query,
+                evidence=context,
+            )
+
+            if local_answer:
+
+                generator = "Local BART Summarizer"
+
+                answer = (
+                    "⚠️ Cloud AI was temporarily unavailable.\n\n"
+                    "The following answer was generated locally "
+                    "using the retrieved medical evidence.\n\n"
+                    + local_answer
+                )
+
+                print("\nUsing Local BART fallback.\n")
+
+        except Exception as e:
+
+            print("\nBART Error")
+            print(e)
+
+            answer = None
+
+    # ----------------------------------------------------
+    # Evidence Synthesizer Fallback
+    # ----------------------------------------------------
+
+    if answer is None:
+
+        generator = "Evidence Synthesizer"
+
         answer = (
-            "⚠️ The language model is temporarily unavailable.\n\n"
-            "The following evidence was retrieved from the medical knowledge base:\n\n"
+            "⚠️ Cloud AI was temporarily unavailable.\n\n"
+            "Based on the retrieved medical evidence:\n\n"
             + evidence_summary(retrieved_docs)
         )
+
+    # ----------------------------------------------------
+    # Return
+    # ----------------------------------------------------
 
     return {
         "answer": answer,
         "disclaimer": MEDICAL_DISCLAIMER,
+        "generator": generator,
     }

@@ -1,10 +1,12 @@
 from backend.routing.language_detector import detect_language
 from backend.routing.classifier import classify
+from backend.routing.risk_assessment import assess_risk
 
 from .health_agent import HealthAgent
 from .nutrition_agent import NutritionAgent
 from .emergency_agent import EmergencyAgent
 from .hindi_planner import HindiPlanner
+from .risk_agent import RiskAssessmentAgent
 
 
 class PlannerAgent:
@@ -14,8 +16,8 @@ class PlannerAgent:
         self.health = HealthAgent()
         self.nutrition = NutritionAgent()
         self.emergency = EmergencyAgent()
-
         self.hindi = HindiPlanner()
+        self.risk = RiskAssessmentAgent()
 
     def run(
         self,
@@ -23,61 +25,109 @@ class PlannerAgent:
         session_id,
     ):
 
+        # -----------------------------------
+        # Language Detection
+        # -----------------------------------
+
         language = detect_language(query)
+
+        # -----------------------------------
+        # Risk Assessment
+        # -----------------------------------
+
+        risk = self.risk.run(query)
+
+        # -----------------------------------
+        # Planner Logs
+        # -----------------------------------
 
         print("\n" + "=" * 55)
         print("PLANNER")
         print("=" * 55)
-        print(f"Query    : {query}")
-        print(f"Language : {language}")
+        print(f"Query      : {query}")
+        print(f"Language   : {language}")
+        print(f"Risk Agent : {risk['agent']}")
 
-        # -------------------------
-        # Hindi
-        # -------------------------
+        print(f"Risk Level : {risk['risk']}")
+
+        if risk["reason"]:
+
+            print(f"Reason     : {risk['reason']}")
+        # -----------------------------------
+        # Hindi Route
+        # -----------------------------------
 
         if language == "hi":
 
-            print("Agent    : Hindi Planner")
-            print("Route    : Hindi RAG")
+            print("Agent      : Hindi Planner")
+            print("Route      : Hindi RAG")
             print("=" * 55)
 
-            return self.hindi.run(
+            result = self.hindi.run(
                 query,
                 session_id,
             )
 
-        # -------------------------
-        # English
-        # -------------------------
+            result["metadata"]["risk"] = risk
+
+            return result
+
+        # -----------------------------------
+        # English Classification
+        # -----------------------------------
 
         route = classify(query)
 
-        print(f"Intent   : {route}")
+        print(f"Intent     : {route}")
+
+        # -----------------------------------
+        # High-Risk Escalation
+        # -----------------------------------
+
+        if route == "emergency" or risk["risk"] == "high":
+
+            print("Escalation : Emergency Agent")
+            print("=" * 55)
+
+            result = self.emergency.run(
+                query,
+                session_id,
+            )
+
+            result["metadata"]["risk"] = risk
+
+            return result
+
+        # -----------------------------------
+        # Nutrition
+        # -----------------------------------
 
         if route == "nutrition":
 
-            print("Agent    : Nutrition Agent")
+            print("Agent      : Nutrition Agent")
             print("=" * 55)
 
-            return self.nutrition.run(
+            result = self.nutrition.run(
                 query,
                 session_id,
             )
 
-        if route == "emergency":
+            result["metadata"]["risk"] = risk
 
-            print("Agent    : Emergency Agent")
-            print("=" * 55)
+            return result
 
-            return self.emergency.run(
-                query,
-                session_id,
-            )
+        # -----------------------------------
+        # Default Health Agent
+        # -----------------------------------
 
-        print("Agent    : Health Agent")
+        print("Agent      : Health Agent")
         print("=" * 55)
 
-        return self.health.run(
+        result = self.health.run(
             query,
             session_id,
         )
+
+        result["metadata"]["risk"] = risk
+
+        return result

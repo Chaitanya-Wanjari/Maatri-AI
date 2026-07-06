@@ -1,10 +1,10 @@
 """
 Hybrid Query Rewriter
 
-Uses Gemini when available.
+Uses the configured LLM when available.
 
-Falls back to a heuristic rewriter when Gemini
-is unavailable or quota is exhausted.
+Falls back to a heuristic rewriter if the LLM
+is unavailable.
 """
 
 from backend.llm.provider import generate
@@ -39,8 +39,8 @@ def heuristic_rewrite(
     history: list,
 ):
     """
-    Rewrite short follow-up questions using
-    the previous user question.
+    Rewrite short follow-up questions
+    using the previous user question.
     """
 
     if not history:
@@ -117,20 +117,33 @@ Latest Question:
 {query}
 """
 
-    rewritten = generate(prompt)
+    result = generate(prompt)
 
     # ------------------------------
-    # Gemini unavailable
+    # LLM unavailable
     # ------------------------------
 
-    if rewritten is None:
+    if result is None:
 
         return heuristic_rewrite(
             query,
             history,
         )
 
-    rewritten = rewritten.strip()
+    # ------------------------------
+    # Provider now returns dict
+    # ------------------------------
+
+    if isinstance(result, dict):
+
+        rewritten = result.get(
+            "text",
+            ""
+        ).strip()
+
+    else:
+
+        rewritten = str(result).strip()
 
     if not rewritten:
 
