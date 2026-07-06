@@ -372,39 +372,39 @@ LLM_PROVIDER=gemini
 
 ## Home Page
 
-*(Add Screenshot)*
+![Home](docs/homepage.png)
 
 ---
+## Bilingual Support
+
+![Bilingual](docs/selectchatbot.png)
+---
+## Resorces for Users
+![Hindi](docs/resources.png)
+---
+
+## FAQs Search
+![Hindi](docs/faqs.png)
 
 ## English Conversation
 
-*(Add Screenshot)*
+![English](docs/englishchatbot.png)
 
 ---
 
 ## Hindi Conversation
 
-*(Add Screenshot)*
+![Hindi](docs/hindi-chat.png)
 
 ---
 
 ## Explainability Panel
 
-*(Add Screenshot)*
+![Hindi](docs/explanability.png)
 
 ---
 
-## Retrieved Sources
 
-*(Add Screenshot)*
-
----
-
-## Risk Assessment
-
-*(Add Screenshot)*
-
----
 
 # Future Improvements
 
