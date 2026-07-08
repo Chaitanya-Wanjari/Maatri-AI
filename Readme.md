@@ -29,17 +29,17 @@ The goal is to assist users with educational maternal healthcare information whi
 
 | Feature | Description |
 |----------|-------------|
-| 🌐 Bilingual Support | English and Hindi maternal healthcare assistant |
-| 🤖 Multi-Agent System | Planner routes queries to specialized healthcare agents |
-| 🧠 Conversation Memory | Handles contextual follow-up questions |
-| 🔁 Query Rewriting | Converts conversational follow-ups into standalone questions |
-| 🔎 Hybrid Retrieval | FAISS semantic search with Cross Encoder reranking |
-| 📚 Evidence Grounding | Responses generated only from retrieved medical evidence |
-| ⚠️ Risk Assessment | Detects potentially dangerous pregnancy symptoms |
-| 🛡 Medical Safety | Safety-first prompting with medical disclaimers |
-| 📄 Source Attribution | Shows retrieved evidence used for every response |
-| 🧩 Explainability Panel | Visualizes routing, retrieval, latency, and reasoning |
-| 🔄 Local Fallback | Local summarization when cloud LLMs are unavailable |
+| Bilingual Support | English and Hindi maternal healthcare assistant |
+| Multi-Agent System | Planner routes queries to specialized healthcare agents |
+| Conversation Memory | Handles contextual follow-up questions |
+| Query Rewriting | Converts conversational follow-ups into standalone questions |
+| Hybrid Retrieval | FAISS semantic search with Cross Encoder reranking |
+| Evidence Grounding | Responses generated only from retrieved medical evidence |
+| Risk Assessment | Detects potentially dangerous pregnancy symptoms |
+| Medical Safety | Safety-first prompting with medical disclaimers |
+| Source Attribution | Shows retrieved evidence used for every response |
+| Explainability Panel | Visualizes routing, retrieval, latency, and reasoning |
+| Local Fallback | Local summarization when cloud LLMs are unavailable |
 
 ---
 
