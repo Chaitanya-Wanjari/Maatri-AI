@@ -65,10 +65,6 @@ def answer(
         "documents_used": len(documents),
         "source_distribution": source_counts,
         "latency_ms": latency_ms,
-        "llm": "Gemini 2.5 Flash",
-        "retriever": "FAISS",
-        "reranker": "Cross Encoder",
-        "generator": response["generator"],
     }
 
     memory = []

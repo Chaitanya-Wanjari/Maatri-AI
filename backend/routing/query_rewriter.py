@@ -7,7 +7,6 @@ Falls back to a heuristic rewriter if the LLM
 is unavailable.
 """
 
-from backend.llm.provider import generate
 
 
 FOLLOWUP_PREFIXES = [
@@ -80,76 +79,30 @@ def rewrite_query(
 ):
     """
     Rewrite follow-up questions into
-    standalone questions.
+    standalone questions using only
+    conversation history.
     """
 
     if not history:
         return query
 
-    history_text = ""
+    last_user = None
 
-    for msg in history[-6:]:
+    for msg in reversed(history):
+        if msg["role"] == "user":
+            last_user = msg["content"]
+            break
 
-        history_text += (
-            f"{msg['role']}: "
-            f"{msg['content']}\n"
-        )
+    if last_user is None:
+        return query
 
-    prompt = f"""
-You rewrite conversational questions.
+    q = query.strip().lower()
 
-Rules:
+    # Short follow-up questions inherit context
+    if (
+        len(q.split()) <= 3
+        or any(q.startswith(prefix) for prefix in FOLLOWUP_PREFIXES)
+    ):
+        return f"{last_user} {query}"
 
-- Rewrite ONLY the latest user question.
-- Preserve meaning.
-- Use conversation history.
-- Do NOT answer.
-- Output ONLY the rewritten question.
-- If already standalone,
-return it unchanged.
-
-Conversation:
-
-{history_text}
-
-Latest Question:
-
-{query}
-"""
-
-    result = generate(prompt)
-
-    # ------------------------------
-    # LLM unavailable
-    # ------------------------------
-
-    if result is None:
-
-        return heuristic_rewrite(
-            query,
-            history,
-        )
-
-    # ------------------------------
-    # Provider now returns dict
-    # ------------------------------
-
-    if isinstance(result, dict):
-
-        rewritten = result.get(
-            "text",
-            ""
-        ).strip()
-
-    else:
-
-        rewritten = str(result).strip()
-
-    if not rewritten:
-
-        return heuristic_rewrite(
-            query,
-            history,
-        )
-
-    return rewritten
+    return query

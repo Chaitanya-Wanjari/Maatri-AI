@@ -87,3 +87,7 @@ backend/models/
 !backend/english_rag/models/fine_tuned_cross_encoder/
 !backend/hindi_rag/embeddings/
 !backend/english_rag/models/fine_tuned_cross_encoder/model.safetensors
+
+# Fine-tuned models
+backend/hindi_rag/models/crossencoder_finetuned_hi/
+backend/english_rag/models/crossencoder_finetuned/

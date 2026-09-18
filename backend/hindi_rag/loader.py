@@ -15,6 +15,20 @@ from .config import (
     METADATA_FILE,
 )
 
+from pathlib import Path
+from functools import lru_cache
+from sentence_transformers import CrossEncoder
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+@lru_cache(maxsize=1)
+def get_cross_encoder():
+    model_path = BASE_DIR / "models" / "crossencoder_finetuned_hi"
+
+    print("Loading Hindi fine-tuned cross encoder...")
+
+    return CrossEncoder(str(model_path))
 
 @lru_cache(maxsize=1)
 def get_encoder():
@@ -22,10 +36,7 @@ def get_encoder():
     return SentenceTransformer(str(BI_ENCODER_PATH))
 
 
-@lru_cache(maxsize=1)
-def get_cross_encoder():
-    print("Loading Hindi cross encoder...")
-    return CrossEncoder(str(CROSS_ENCODER_PATH))
+
 
 
 @lru_cache(maxsize=1)
