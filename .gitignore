@@ -91,3 +91,5 @@ backend/models/
 # Fine-tuned models
 backend/hindi_rag/models/crossencoder_finetuned_hi/
 backend/english_rag/models/crossencoder_finetuned/
+.vercel
+.env*
