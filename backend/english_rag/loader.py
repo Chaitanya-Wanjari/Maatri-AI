@@ -7,7 +7,7 @@ through cached accessor functions.
 
 from functools import lru_cache
 import json
-
+import gc
 import faiss
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
@@ -29,8 +29,10 @@ from .config import (
 
 @lru_cache(maxsize=1)
 def get_encoder():
-    print("Loading embedding model...")
-    return SentenceTransformer(EMBEDDING_MODEL)
+    print("Loading English embedding model...")
+    model = SentenceTransformer(EMBEDDING_MODEL)
+    print("English embedding model loaded.")
+    return model
 
 
 # ------------------------------------------------------------------
@@ -99,3 +101,8 @@ def get_vectorstores():
             "texts": book_texts,
         },
     }
+
+def unload_models():
+    get_encoder.cache_clear()
+    get_cross_encoder.cache_clear()
+    gc.collect()
