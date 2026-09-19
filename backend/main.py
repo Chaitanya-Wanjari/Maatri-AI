@@ -11,11 +11,14 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://maatri-c4yf21h2t-chaitanya-wanjaris-projects-34a02e83.vercel.app",
+        "https://maatri-ai-six.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.include_router(health_router)
 app.include_router(router)
