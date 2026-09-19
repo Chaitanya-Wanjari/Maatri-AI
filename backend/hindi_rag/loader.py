@@ -22,13 +22,17 @@ from sentence_transformers import CrossEncoder
 BASE_DIR = Path(__file__).resolve().parent
 
 
+from functools import lru_cache
+import os
+from sentence_transformers import CrossEncoder
+
 @lru_cache(maxsize=1)
 def get_cross_encoder():
-    model_path = BASE_DIR / "models" / "crossencoder_finetuned_hi"
-
     print("Loading Hindi fine-tuned cross encoder...")
-
-    return CrossEncoder(str(model_path))
+    return CrossEncoder(
+        "Chaitanya30/maatri-hindi-crossencoder",
+        token=os.getenv("HF_TOKEN"),
+    )
 
 @lru_cache(maxsize=1)
 def get_encoder():

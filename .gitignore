@@ -107,3 +107,4 @@ backend/hindi_rag/models/crossencoder_finetuned_hi/*
 backend/english_rag/models/crossencoder_finetuned/
 .vercel
 .env*
+backend/hindi_rag/models/crossencoder_finetuned_hi/model.safetensors
