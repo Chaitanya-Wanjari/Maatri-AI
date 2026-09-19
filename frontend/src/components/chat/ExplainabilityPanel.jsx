@@ -182,37 +182,7 @@ export default function ExplainabilityPanel({ message }) {
 
     </div>
 
-    {/* Technology */}
-
-    <div className="rounded-xl border bg-white shadow-sm p-4">
-
-        <div className="font-semibold mb-3">
-            ⚙️ Technology Stack
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-
-            {[
-                "Google ADK",
-                "Gemini",
-                "FAISS",
-                "Cross Encoder",
-                "RAG",
-                "MCP",
-            ].map((item) => (
-
-                <span
-                    key={item}
-                    className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs"
-                >
-                    {item}
-                </span>
-
-            ))}
-
-        </div>
-
-    </div>
+    
 
     {/* Execution Timeline */}
 

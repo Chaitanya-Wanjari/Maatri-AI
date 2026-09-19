@@ -13,13 +13,13 @@ from backend.routing.query_rewriter import rewrite_query
 
 from .retrieval_service import retrieve
 from .generation_service import generate_answer
+from .loader import unload_models
 
 
 def answer(
     query: str,
     session_id: str,
 ):
-
     history = get_history(session_id)
 
     rewritten_query = rewrite_query(
@@ -32,76 +32,75 @@ def answer(
     print("Rewritten:", rewritten_query)
     print("===================================\n")
 
-    start = time.perf_counter()
+    try:
+        start = time.perf_counter()
 
-    documents = retrieve(rewritten_query)
+        documents = retrieve(rewritten_query)
 
-    response = generate_answer(
-        query=rewritten_query,
-        retrieved_docs=documents,
-        history=history,
-    )
-
-    latency_ms = round(
-        (time.perf_counter() - start) * 1000,
-        2,
-    )
-
-    source_counts = {}
-
-    for doc in documents:
-
-        source = doc["source"]
-
-        source_counts[source] = (
-            source_counts.get(source, 0) + 1
+        response = generate_answer(
+            query=rewritten_query,
+            retrieved_docs=documents,
+            history=history,
         )
 
-    response["sources"] = documents
-
-    response["metadata"] = {
-        "language": "Hindi",
-        "knowledge_engine": "Hindi RAG",
-        "documents_used": len(documents),
-        "source_distribution": source_counts,
-        "latency_ms": latency_ms,
-        "llm": "Gemini 2.5 Flash",
-        "retriever": "FAISS",
-        "reranker": "Cross Encoder",
-        "generator": response["generator"],
-    }
-
-    memory = []
-
-    for msg in history[-4:]:
-
-        memory.append(
-            {
-                "role": msg["role"],
-                "content": msg["content"],
-            }
+        latency_ms = round(
+            (time.perf_counter() - start) * 1000,
+            2,
         )
 
-    response["trace"] = {
-        "original_query": query,
-        "rewritten_query": rewritten_query,
-        "retrieved_documents": len(documents),
-        "conversation_memory": memory,
-        "retriever": "FAISS",
-        "reranker": "Cross Encoder",
-        "generator": response["generator"],
-    }
+        source_counts = {}
 
-    add_message(
-        session_id,
-        "user",
-        query,
-    )
+        for doc in documents:
+            source = doc["source"]
 
-    add_message(
-        session_id,
-        "assistant",
-        response["answer"],
-    )
+            source_counts[source] = (
+                source_counts.get(source, 0) + 1
+            )
 
-    return response
+        response["sources"] = documents
+
+        response["metadata"] = {
+            "language": "Hindi",
+            "knowledge_engine": "Hindi RAG",
+            "documents_used": len(documents),
+            "source_distribution": source_counts,
+            "latency_ms": latency_ms,
+        }
+
+        memory = []
+
+        for msg in history[-4:]:
+            memory.append(
+                {
+                    "role": msg["role"],
+                    "content": msg["content"],
+                }
+            )
+
+        response["trace"] = {
+            "original_query": query,
+            "rewritten_query": rewritten_query,
+            "retrieved_documents": len(documents),
+            "conversation_memory": memory,
+            "retriever": "FAISS",
+            "reranker": "Cross Encoder",
+            "generator": response["generator"],
+        }
+
+        add_message(
+            session_id,
+            "user",
+            query,
+        )
+
+        add_message(
+            session_id,
+            "assistant",
+            response["answer"],
+        )
+
+        return response
+
+    finally:
+        # Always free the heavy resources after each request
+        unload_models()

@@ -1,42 +1,18 @@
-from backend.core.settings import LLM_PROVIDER
+import os
 
-from .gemini_client import generate as gemini_generate
-from .ollama_client import generate as ollama_generate
+from .gemma_provider import GemmaProvider
+from .gemini_provider import GeminiProvider
 
 
-LAST_PROVIDER = None
+def get_llm():
+    provider = os.getenv("LLM_PROVIDER", "gemma").lower()
+
+    if provider == "gemma":
+        return GemmaProvider()
+
+    return GeminiProvider()
 
 
 def generate(prompt: str):
-    """
-    Unified LLM Provider.
-
-    Returns a string or None.
-    """
-
-    global LAST_PROVIDER
-
-    if LLM_PROVIDER.lower() == "ollama":
-
-        LAST_PROVIDER = "Ollama"
-
-        return ollama_generate(prompt)
-
-    result = gemini_generate(prompt)
-
-    if result is not None:
-
-        LAST_PROVIDER = "Gemini 2.5 Flash"
-
-        return result
-
-    print("\nSwitching to Ollama fallback...\n")
-
-    LAST_PROVIDER = "Ollama"
-
-    return ollama_generate(prompt)
-
-
-def get_last_provider():
-
-    return LAST_PROVIDER
+    llm = get_llm()
+    return llm.generate(prompt)

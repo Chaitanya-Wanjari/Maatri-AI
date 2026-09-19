@@ -14,7 +14,7 @@ pydantic
 numpy
 torch
 faiss-cpu
-
+huggingface_hub
 transformers
 sentence-transformers
 accelerate

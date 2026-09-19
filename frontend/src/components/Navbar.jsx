@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { navItems } from "../constants";
+import logo from "../assets/logo.jpeg";
 
 const Navbar = () => {
   const [activeSection, setActiveSection] = useState("");
@@ -32,10 +33,10 @@ const Navbar = () => {
         {/* Logo + Brand */}
         <div className="flex items-center space-x-2">
           <img
-            src="/src/assets/logo.jpeg"
-            alt="Logo"
-            className="h-8 w-8 rounded-full"
-          />
+             src={logo}
+             alt="Logo"
+             className="h-8 w-8 rounded-full"
+/>
           <span className="text-2xl font-serif text-[#4B1D3F]">Maatri</span>
         </div>
 

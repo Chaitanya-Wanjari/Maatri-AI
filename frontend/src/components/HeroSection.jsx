@@ -1,3 +1,4 @@
+import heroImage from "../assets/heroimage.jpg";
 const HeroSection = () => {
   return (
     <section className="bg-warm-primary py-24 md:py-28 font-sans relative overflow-hidden">
@@ -27,7 +28,7 @@ const HeroSection = () => {
       {/* Image stuck to bottom right */}
       <div className="absolute bottom-0 right-10 translate-x-[-40px] w-48 md:w-64 lg:w-72 rounded-t-[50%] overflow-hidden">
         <img
-          src="/src/assets/heroimage.jpg"
+          src={heroImage}
           alt="Mother holding baby"
           className="w-full block"
           style={{ objectFit: "cover" }}

@@ -1,10 +1,5 @@
-"""
-Generation Service
 
-Uses Gemini/Ollama as the primary generator.
-Falls back to a local BART summarizer.
-Falls back to an evidence synthesizer if both fail.
-"""
+
 
 from backend.llm.provider import generate
 from backend.llm.bart_summarizer import summarize
