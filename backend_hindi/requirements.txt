@@ -1,0 +1,46 @@
+# ============================
+# API
+# ============================
+
+fastapi
+uvicorn
+python-dotenv
+pydantic
+
+# ============================
+# ML
+# ============================
+
+numpy
+torch
+faiss-cpu
+huggingface_hub
+transformers
+sentence-transformers
+accelerate
+
+# ============================
+# Google
+# ============================
+
+google-genai
+google-adk
+
+# ============================
+# MCP
+# ============================
+
+mcp
+
+# ============================
+# Language Detection
+# ============================
+
+langdetect
+
+# ============================
+# Utilities
+# ============================
+
+tqdm
+requests
