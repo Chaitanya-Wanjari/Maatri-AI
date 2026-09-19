@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 import json
 import os
-
+import gc
 import faiss
 import numpy as np
 import requests
@@ -118,3 +118,12 @@ def get_vectorstore():
         docs = json.load(f)
 
     return index, docs
+
+def unload_models():
+    """
+    Free the cached Hindi embedding model and cross-encoder
+    after each request to reduce Railway memory usage.
+    """
+    get_encoder.cache_clear()
+    get_cross_encoder.cache_clear()
+    gc.collect()
