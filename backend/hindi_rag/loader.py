@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import os
 import gc
-
+import requests
 import faiss
 import numpy as np
 from huggingface_hub import InferenceClient
@@ -32,6 +32,17 @@ HF_CLIENT = InferenceClient(
 
 class HFHindiEncoder:
 
+    def __init__(self):
+        self.url = (
+            "https://router.huggingface.co/"
+            "hf-inference/models/intfloat/multilingual-e5-base"
+        )
+
+        self.headers = {
+            "Authorization": f"Bearer {os.getenv('HF_TOKEN')}",
+            "Content-Type": "application/json",
+        }
+
     def encode(
         self,
         texts,
@@ -41,13 +52,19 @@ class HFHindiEncoder:
         embeddings = []
 
         for text in texts:
-            vec = np.array(
-                HF_CLIENT.feature_extraction(
-                    model="intfloat/multilingual-e5-base",
-                    text=f"query: {text}",
-                ),
-                dtype=np.float32,
+            response = requests.post(
+                self.url,
+                headers=self.headers,
+                json={
+                    "inputs": f"query: {text}",
+                    "options": {"wait_for_model": True},
+                },
+                timeout=120,
             )
+
+            response.raise_for_status()
+
+            vec = np.array(response.json(), dtype=np.float32)
 
             if normalize_embeddings:
                 norm = np.linalg.norm(vec)
@@ -58,27 +75,39 @@ class HFHindiEncoder:
 
         return np.vstack(embeddings)
 
-
 # -----------------------------
 # Hindi Cross Encoder (Serverless)
 # -----------------------------
 
 class HFHindiCrossEncoder:
 
+    def __init__(self):
+        self.url = (
+            "https://router.huggingface.co/"
+            "hf-inference/models/Chaitanya30/maatri-hindi-crossencoder"
+        )
+
+        self.headers = {
+            "Authorization": f"Bearer {os.getenv('HF_TOKEN')}",
+            "Content-Type": "application/json",
+        }
+
     def predict(self, sentence_pairs):
-        scores = []
+        response = requests.post(
+            self.url,
+            headers=self.headers,
+            json={"inputs": sentence_pairs},
+            timeout=300,
+        )
 
-        for query, passage in sentence_pairs:
-            result = HF_CLIENT.sentence_similarity(
-                model="Chaitanya30/maatri-hindi-crossencoder",
-                sentence=query,
-                other_sentences=[passage],
-            )
-            scores.append(float(result[0]))
+        response.raise_for_status()
 
-        return scores
+        scores = response.json()
 
-
+        return [
+            s["score"] if isinstance(s, dict) else float(s)
+            for s in scores
+        ]
 # -----------------------------
 # Cached Accessors
 # -----------------------------
