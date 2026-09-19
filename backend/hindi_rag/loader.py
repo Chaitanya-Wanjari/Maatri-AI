@@ -64,7 +64,18 @@ class HFHindiEncoder:
 
             response.raise_for_status()
 
-            vec = np.array(response.json(), dtype=np.float32)
+            data = response.json()
+
+# Handle different HF response formats
+            if isinstance(data, dict):
+                if "embeddings" in data:
+                    vec = np.array(data["embeddings"][0], dtype=np.float32)
+                elif "data" in data:
+                    vec = np.array(data["data"][0]["embedding"], dtype=np.float32)
+                else:
+                     raise RuntimeError(f"Unexpected HF response: {data}")
+            else:
+                vec = np.array(data, dtype=np.float32)
 
             if normalize_embeddings:
                 norm = np.linalg.norm(vec)
