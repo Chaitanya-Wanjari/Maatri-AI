@@ -89,7 +89,21 @@ backend/models/
 !backend/english_rag/models/fine_tuned_cross_encoder/model.safetensors
 
 # Fine-tuned models
-backend/hindi_rag/models/crossencoder_finetuned_hi/
+# Fine-tuned Hindi cross encoder
+backend/hindi_rag/models/crossencoder_finetuned_hi/*
+!backend/hindi_rag/models/crossencoder_finetuned_hi/model.safetensors
+!backend/hindi_rag/models/crossencoder_finetuned_hi/config.json
+!backend/hindi_rag/models/crossencoder_finetuned_hi/config_sentence_transformers.json
+!backend/hindi_rag/models/crossencoder_finetuned_hi/modules.json
+!backend/hindi_rag/models/crossencoder_finetuned_hi/sentence_bert_config.json
+!backend/hindi_rag/models/crossencoder_finetuned_hi/tokenizer.json
+!backend/hindi_rag/models/crossencoder_finetuned_hi/tokenizer_config.json
+!backend/hindi_rag/models/crossencoder_finetuned_hi/README.md
+
+# Keep English model
+!backend/english_rag/models/fine_tuned_cross_encoder/model.safetensors
+
+# Ignore other fine-tuned models
 backend/english_rag/models/crossencoder_finetuned/
 .vercel
 .env*
