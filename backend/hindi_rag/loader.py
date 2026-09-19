@@ -3,9 +3,10 @@ from pathlib import Path
 import json
 import os
 import gc
+
 import faiss
 import numpy as np
-import requests
+from huggingface_hub import InferenceClient
 
 from .config import (
     FAISS_INDEX,
@@ -16,20 +17,20 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 # -----------------------------
+# Shared HF Client
+# -----------------------------
+
+HF_CLIENT = InferenceClient(
+    provider="hf-inference",
+    api_key=os.getenv("HF_TOKEN"),
+)
+
+
+# -----------------------------
 # Hindi Embedding (Serverless)
 # -----------------------------
 
 class HFHindiEncoder:
-
-    def __init__(self):
-        self.url = (
-            "https://api-inference.huggingface.co/models/"
-            "intfloat/multilingual-e5-base"
-        )
-
-        self.headers = {
-            "Authorization": f"Bearer {os.getenv('HF_TOKEN')}"
-        }
 
     def encode(
         self,
@@ -37,24 +38,21 @@ class HFHindiEncoder:
         convert_to_numpy=True,
         normalize_embeddings=True,
     ):
-
         embeddings = []
 
         for text in texts:
-
-            response = requests.post(
-                self.url,
-                headers=self.headers,
-                json={"inputs": f"query: {text}"},
-                timeout=120,
+            vec = np.array(
+                HF_CLIENT.feature_extraction(
+                    model="intfloat/multilingual-e5-base",
+                    text=f"query: {text}",
+                ),
+                dtype=np.float32,
             )
 
-            response.raise_for_status()
-
-            vec = np.array(response.json(), dtype=np.float32)
-
             if normalize_embeddings:
-                vec = vec / np.linalg.norm(vec)
+                norm = np.linalg.norm(vec)
+                if norm > 0:
+                    vec = vec / norm
 
             embeddings.append(vec)
 
@@ -62,40 +60,28 @@ class HFHindiEncoder:
 
 
 # -----------------------------
-# Hindi Cross Encoder
+# Hindi Cross Encoder (Serverless)
 # -----------------------------
 
 class HFHindiCrossEncoder:
 
-    def __init__(self):
-
-        self.url = (
-            "https://api-inference.huggingface.co/models/"
-            "Chaitanya30/maatri-hindi-crossencoder"
-        )
-
-        self.headers = {
-            "Authorization": f"Bearer {os.getenv('HF_TOKEN')}"
-        }
-
     def predict(self, sentence_pairs):
+        scores = []
 
-        response = requests.post(
-            self.url,
-            headers=self.headers,
-            json={"inputs": sentence_pairs},
-            timeout=300,
-        )
+        for query, passage in sentence_pairs:
+            result = HF_CLIENT.sentence_similarity(
+                model="Chaitanya30/maatri-hindi-crossencoder",
+                sentence=query,
+                other_sentences=[passage],
+            )
+            scores.append(float(result[0]))
 
-        response.raise_for_status()
+        return scores
 
-        scores = response.json()
 
-        return [
-            s["score"] if isinstance(s, dict) else s
-            for s in scores
-        ]
-
+# -----------------------------
+# Cached Accessors
+# -----------------------------
 
 @lru_cache(maxsize=1)
 def get_encoder():
@@ -111,7 +97,6 @@ def get_cross_encoder():
 
 @lru_cache(maxsize=1)
 def get_vectorstore():
-
     index = faiss.read_index(str(FAISS_INDEX))
 
     with open(METADATA_FILE, encoding="utf-8") as f:
@@ -119,11 +104,12 @@ def get_vectorstore():
 
     return index, docs
 
+
+# -----------------------------
+# Cleanup
+# -----------------------------
+
 def unload_models():
-    """
-    Free the cached Hindi embedding model and cross-encoder
-    after each request to reduce Railway memory usage.
-    """
     get_encoder.cache_clear()
     get_cross_encoder.cache_clear()
     gc.collect()
